@@ -13,7 +13,7 @@ def setup_models():
     inputs = tokenizer("Hello, my dog is cute", return_tensors="pt")
 
     model_hf = SqueezeBertModel_hf.from_pretrained('squeezebert/squeezebert-uncased')
-    model_R = SqueezeBertModel_R.from_pretrained('/data/dataset/')
+    model_R = SqueezeBertModel_R.from_pretrained('/data/SqueezeBert/dataset/')
 
     new_state_dict = PCC.modify_state_dict_with_prefix(model_hf, '')
     

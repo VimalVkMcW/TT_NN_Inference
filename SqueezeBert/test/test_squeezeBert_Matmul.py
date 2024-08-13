@@ -6,7 +6,7 @@ import sys
 sys.path.append("../")
 
 from reference.SqueezeBert_Matmul import MatMulWrapper as MatMulWrapper_R
-from transformers.models.squeezebert.modeling_squeezebert import MatMulWrapper
+from tf_local.models.squeezebert.modeling_squeezebert import MatMulWrapper
 
 @pytest.fixture
 def setup_matmul_wrapper_models():

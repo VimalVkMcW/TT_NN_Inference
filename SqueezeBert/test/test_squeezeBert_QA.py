@@ -1,26 +1,43 @@
-from transformers import AutoTokenizer, SqueezeBertForQuestionAnswering
 import torch
+from transformers import AutoTokenizer
+import sys
+from Compare_pcc import PCC
+sys.path.append("../")
+from tf_local.models.squeezebert.modeling_squeezebert import SqueezeBertForQuestionAnswering as SqueezeBertForQuestionAnswering_hf
+from reference.SqueezeBert_QA import SqueezeBertForQuestionAnswering as SqueezeBertForQuestionAnswering_R
 
-tokenizer = AutoTokenizer.from_pretrained("squeezebert/squeezebert-uncased")
-model = SqueezeBertForQuestionAnswering.from_pretrained("squeezebert/squeezebert-uncased")
+def setup_models():
+    tokenizer = AutoTokenizer.from_pretrained("squeezebert/squeezebert-uncased", clean_up_tokenization_spaces=False)
+    inputs = tokenizer("Hello, my dog is cute", return_tensors="pt")
 
+    model_hf = SqueezeBertForQuestionAnswering_hf.from_pretrained('squeezebert/squeezebert-uncased')
+    model_R = SqueezeBertForQuestionAnswering_R.from_pretrained('/data/SqueezeBert/dataset/')
 
-question, text = "Who was Jim Henson?", "Jim Henson was a nice puppet"
+    new_state_dict = PCC.modify_state_dict_with_prefix(model_hf, '')
+    model_hf.load_state_dict(new_state_dict)
+    model_R.load_state_dict(new_state_dict)
 
-inputs = tokenizer(question, text, return_tensors="pt")
-print(inputs)
-with torch.no_grad():
-    outputs = model(**inputs)
+    return model_hf, model_R, inputs
 
-answer_start_index = outputs.start_logits.argmax()
-answer_end_index = outputs.end_logits.argmax()
+def test_squeezebert_for_question_answering_outputs():
+    model_hf, model_R, inputs = setup_models()
 
-predict_answer_tokens = inputs.input_ids[0, answer_start_index : answer_end_index + 1]
+    output_hf = model_hf(**inputs)
+    output_R = model_R(**inputs)
 
-# target is "nice puppet"
-target_start_index = torch.tensor([14])
-target_end_index = torch.tensor([15])
+    start_logits_hf_flat = PCC.flatten_tuple(output_hf.start_logits)
+    start_logits_R_flat = PCC.flatten_tuple(output_R.start_logits)
 
-outputs = model(**inputs)
-loss = outputs.loss
-print(loss)
+    end_logits_hf_flat = PCC.flatten_tuple(output_hf.end_logits)
+    end_logits_R_flat = PCC.flatten_tuple(output_R.end_logits)
+
+    start_logits_pcc = PCC.comp_pcc(start_logits_hf_flat, start_logits_R_flat)
+    end_logits_pcc = PCC.comp_pcc(end_logits_hf_flat, end_logits_R_flat)
+    print(start_logits_pcc)
+    print(end_logits_pcc)
+
+    assert start_logits_pcc[0] >= 0.99, f"Start Logits PCC is below threshold: {start_logits_pcc}"
+    assert end_logits_pcc[0] >= 0.99, f"End Logits PCC is below threshold: {end_logits_pcc}"
+
+if __name__ == "__main__":
+    test_squeezebert_for_question_answering_outputs()

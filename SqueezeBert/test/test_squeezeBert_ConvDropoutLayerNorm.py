@@ -7,7 +7,7 @@ import sys
 sys.path.append("../")
 
 from reference.SqueezeBert_ConvDropoutLayerNorm import ConvDropoutLayerNorm as ConvDropoutLayerNorm_R
-from transformers.models.squeezebert.modeling_squeezebert import ConvDropoutLayerNorm
+from tf_local.models.squeezebert.modeling_squeezebert import ConvDropoutLayerNorm
 
 @pytest.fixture(scope="module")
 def squeezebert_model():

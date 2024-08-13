@@ -6,7 +6,7 @@ import sys
 sys.path.append("../")
 
 from reference.SqueezeBert_LayerNorm import SqueezeBertLayerNorm as SqueezeBertLayerNorm_R
-from transformers.models.squeezebert.modeling_squeezebert import SqueezeBertLayerNorm
+from tf_local.models.squeezebert.modeling_squeezebert import SqueezeBertLayerNorm
 
 @pytest.fixture(scope="module")
 def base_model():
